@@ -56,8 +56,8 @@ class PaymentExample extends PaymentModule
         $this->bootstrap = true;
         parent::__construct();
 
-        $this->displayName = $this->l('Payment Example');
-        $this->description = $this->l('Description of Payment Example');
+        $this->displayName = $this->l('Xendit Payment Example');
+        $this->description = $this->l('Xendit Payment Example in Prestashop');
 
         if (!count(Currency::checkPaymentCurrencies($this->id))) {
             $this->warning = $this->l('No currency has been set for this module.');
@@ -83,13 +83,18 @@ class PaymentExample extends PaymentModule
         }
 
         $payment_options = [
-            $this->getOfflinePaymentOption(),
+            // $this->getOfflinePaymentOption(),
             $this->getExternalPaymentOption(),
-            $this->getEmbeddedPaymentOption(),
-            $this->getIframePaymentOption(),
+            // $this->getEmbeddedPaymentOption(),
+            // $this->getIframePaymentOption(),
         ];
 
         return $payment_options;
+    }
+
+    public function hookPaymentReturn($params)
+    {
+        var_dump($params);
     }
 
     public function checkCurrency($cart)
@@ -111,9 +116,9 @@ class PaymentExample extends PaymentModule
     {
         $offlineOption = new PaymentOption();
         $offlineOption->setCallToActionText($this->l('Pay offline'))
-                      ->setAction($this->context->link->getModuleLink($this->name, 'validation', array(), true))
-                      ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
-                      ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/payment.jpg'));
+            ->setAction($this->context->link->getModuleLink($this->name, 'validation', array(), true))
+            ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/payment.png'));
 
         return $offlineOption;
     }
@@ -122,16 +127,16 @@ class PaymentExample extends PaymentModule
     {
         $externalOption = new PaymentOption();
         $externalOption->setCallToActionText($this->l('Pay external'))
-                       ->setAction($this->context->link->getModuleLink($this->name, 'validation', array(), true))
-                       ->setInputs([
-                            'token' => [
-                                'name' =>'token',
-                                'type' =>'hidden',
-                                'value' =>'12345689',
-                            ],
-                        ])
-                       ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
-                       ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/payment.jpg'));
+            ->setAction($this->context->link->getModuleLink($this->name, 'validation', array(), true))
+            ->setInputs([
+                'token' => [
+                    'name' => 'token',
+                    'type' => 'hidden',
+                    'value' => '12345689',
+                ],
+            ])
+            ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/payment.png'));
 
         return $externalOption;
     }
@@ -140,9 +145,9 @@ class PaymentExample extends PaymentModule
     {
         $embeddedOption = new PaymentOption();
         $embeddedOption->setCallToActionText($this->l('Pay embedded'))
-                       ->setForm($this->generateForm())
-                       ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
-                       ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/payment.jpg'));
+            ->setForm($this->generateForm())
+            ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/payment.png'));
 
         return $embeddedOption;
     }
@@ -151,9 +156,9 @@ class PaymentExample extends PaymentModule
     {
         $iframeOption = new PaymentOption();
         $iframeOption->setCallToActionText($this->l('Pay iframe'))
-                     ->setAction($this->context->link->getModuleLink($this->name, 'iframe', array(), true))
-                     ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
-                     ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/payment.jpg'));
+            ->setAction($this->context->link->getModuleLink($this->name, 'iframe', array(), true))
+            ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/payment.png'));
 
         return $iframeOption;
     }
@@ -167,7 +172,7 @@ class PaymentExample extends PaymentModule
 
         $years = [];
         for ($i = 0; $i <= 10; $i++) {
-            $years[] = date('Y', strtotime('+'.$i.' years'));
+            $years[] = date('Y', strtotime('+' . $i . ' years'));
         }
 
         $this->context->smarty->assign([

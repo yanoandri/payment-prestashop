@@ -10,7 +10,14 @@
     }
   ],
   "require": {
-    "php": ">=5.3.2"
+    "php": ">=5.3.2",
+    "xendit/xendit-php": "^2.5",
+    "vlucas/phpdotenv": "^5.2"
+  },
+  "autoload": {
+    "psr-4": {
+        "Xendit\\": "src/"
+    }
   },
   "config": {
     "preferred-install": "dist"
