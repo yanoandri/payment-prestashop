@@ -70,25 +70,52 @@ class PaymentExampleValidationModuleFrontController extends ModuleFrontControlle
         //     '{bankwire_details}' => nl2br(Configuration::get('BANK_WIRE_DETAILS')),
         //     '{bankwire_address}' => nl2br(Configuration::get('BANK_WIRE_ADDRESS'))
         // );
-
-        // $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-        // $dotenv->load();
-
-        // $secret = $_ENV['SECRET_API_KEY'];
-        // $email = $_ENV['EMAIL_TO'];
-        var_dump($total);
-        // $params = [
-        //     'external_id' => $cart->id_customer,
-        //     'payer_email' => $email,
-        //     'description' => 'Trip to Bali',
-        //     'amount' => $total,
-        // ];
-        // Xendit::setApiKey($secret);
-
-        // $createInvoice = \Xendit\Invoice::create($params);
-        // Tools::redirect($createInvoice->invoice_url);
-
+        //hardcode sementara
+        $email = 'yano@xendit.co';
+        $timestamp = date("YmdHis");
+        $params = [
+            'external_id' => 'demo_'.$timestamp,
+            'payer_email' => $email,
+            'description' => 'Checkout Odading Mang Oleh',
+            'amount' => $total,
+            'invoice_duration' => 3600
+        ];
+        $createInvoice = $this->getXenditInvoice($params);
+        Tools::redirect($createInvoice->invoice_url);
         // $this->module->validateOrder($cart->id, Configuration::get('PS_OS_BANKWIRE'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
         // Tools::redirect('index.php?controller=order-confirmation&id_cart='.$cart->id.'&id_module='.$this->module->id.'&id_order='.$this->module->currentOrder.'&key='.$customer->secure_key);
+    }
+
+    protected function getXenditInvoice($data){
+        $url = 'https://api.xendit.co/v2/invoices';
+        $ch 	= curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_ENCODING, "");
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_SSLVERSION, 6);
+        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+
+        $headers = array();
+        $headers[] =  "Content-Type: application/x-www-form-urlencoded";
+        $headers[] =  "Authorization: Basic ".$this->getXenditAuth();
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $result = curl_exec($ch);
+        if($result){
+            return json_decode($result);
+        }else{
+            return null;
+        }
+    }
+
+    protected function getXenditAuth(){
+        $secret = 'xnd_development_nALBhP7VB7evPXTg6xvFnmUdARU8GBxmT0o4DtwHujQ2397pMBbOkFzGsoVPgE';
+        return base64_encode($secret.':');
     }
 }
