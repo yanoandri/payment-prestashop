@@ -33,7 +33,7 @@ if (!defined('_PS_VERSION_')) {
 class PaymentExample extends PaymentModule
 {
     protected $_html = '';
-    protected $_postErrors = array();
+    protected $_postErrors = [];
 
     public $details;
     public $owner;
@@ -45,9 +45,9 @@ class PaymentExample extends PaymentModule
         $this->name = 'paymentexample';
         $this->tab = 'payments_gateways';
         $this->version = '1.0.0';
-        $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
         $this->author = 'PrestaShop';
-        $this->controllers = array('validation');
+        $this->controllers = ['validation'];
         $this->is_eu_compatible = 1;
 
         $this->currencies = true;
@@ -69,7 +69,29 @@ class PaymentExample extends PaymentModule
         if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn')) {
             return false;
         }
+
         return true;
+    }
+
+    /**
+     * Uninstall this module and remove it from all hooks.
+     *
+     * @return bool
+     */
+    public function uninstall()
+    {
+        return parent::uninstall();
+    }
+
+    /**
+     * Returns a string containing the HTML necessary to
+     * generate a configuration screen on the admin.
+     *
+     * @return string
+     */
+    public function getContent()
+    {
+        return $this->_html;
     }
 
     public function hookPaymentOptions($params)
@@ -84,7 +106,8 @@ class PaymentExample extends PaymentModule
 
         $payment_options = [
             // $this->getOfflinePaymentOption(),
-            $this->getExternalPaymentOption(),
+            // $this->getExternalPaymentOption(),
+            $this->getNewPaymentOption(),
             // $this->getEmbeddedPaymentOption(),
             // $this->getIframePaymentOption(),
         ];
@@ -94,7 +117,14 @@ class PaymentExample extends PaymentModule
 
     public function hookPaymentReturn($params)
     {
-        var_dump($params);
+        /*
+         * Verify if this module is enabled
+         */
+        if (!$this->active) {
+            return;
+        }
+
+        return $this->fetch('module:paymentexample/views/templates/front/payment_return.tpl');
     }
 
     public function checkCurrency($cart)
@@ -109,78 +139,25 @@ class PaymentExample extends PaymentModule
                 }
             }
         }
+
         return false;
     }
 
-    public function getOfflinePaymentOption()
+    public function getNewPaymentOption()
     {
-        $offlineOption = new PaymentOption();
-        $offlineOption->setCallToActionText($this->l('Pay offline'))
-            ->setAction($this->context->link->getModuleLink($this->name, 'validation', array(), true))
-            ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/payment.png'));
+        $formAction = $this->context->link->getModuleLink($this->name, 'validation', [], true);
+        /*
+         * Assign the url form action to the template var $action
+         */
+        $this->smarty->assign(['action' => $formAction]);
 
-        return $offlineOption;
-    }
+        $paymentForm = $this->fetch('module:paymentexample/views/templates/front/payment_options.tpl');
+        $newOption = new PaymentOption();
+        $newOption->setModuleName($this->l('Test new option'))
+            ->setCallToActionText($this->l('Xendit Payment'))
+            ->setAction($formAction)
+            ->setForm($paymentForm);
 
-    public function getExternalPaymentOption()
-    {
-        $externalOption = new PaymentOption();
-        $externalOption->setCallToActionText($this->l('Pay external'))
-            ->setAction($this->context->link->getModuleLink($this->name, 'validation', array(), true))
-            ->setInputs([
-                'token' => [
-                    'name' => 'token',
-                    'type' => 'hidden',
-                    'value' => '12345689',
-                ],
-            ])
-            ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/payment.png'));
-
-        return $externalOption;
-    }
-
-    public function getEmbeddedPaymentOption()
-    {
-        $embeddedOption = new PaymentOption();
-        $embeddedOption->setCallToActionText($this->l('Pay embedded'))
-            ->setForm($this->generateForm())
-            ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/payment.png'));
-
-        return $embeddedOption;
-    }
-
-    public function getIframePaymentOption()
-    {
-        $iframeOption = new PaymentOption();
-        $iframeOption->setCallToActionText($this->l('Pay iframe'))
-            ->setAction($this->context->link->getModuleLink($this->name, 'iframe', array(), true))
-            ->setAdditionalInformation($this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_infos.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/payment.png'));
-
-        return $iframeOption;
-    }
-
-    protected function generateForm()
-    {
-        $months = [];
-        for ($i = 1; $i <= 12; $i++) {
-            $months[] = sprintf("%02d", $i);
-        }
-
-        $years = [];
-        for ($i = 0; $i <= 10; $i++) {
-            $years[] = date('Y', strtotime('+' . $i . ' years'));
-        }
-
-        $this->context->smarty->assign([
-            'action' => $this->context->link->getModuleLink($this->name, 'validation', array(), true),
-            'months' => $months,
-            'years' => $years,
-        ]);
-
-        return $this->context->smarty->fetch('module:paymentexample/views/templates/front/payment_form.tpl');
+        return $newOption;
     }
 }
