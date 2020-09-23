@@ -46,7 +46,7 @@ class PaymentExample extends PaymentModule
         $this->tab = 'payments_gateways';
         $this->version = '1.0.0';
         $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
-        $this->author = 'PrestaShop';
+        $this->author = 'XenditYano';
         $this->controllers = ['validation'];
         $this->is_eu_compatible = 1;
 
@@ -91,7 +91,94 @@ class PaymentExample extends PaymentModule
      */
     public function getContent()
     {
-        return $this->_html;
+        $output = null;
+ 
+        if (Tools::isSubmit('submit'.$this->name))
+        {
+            $xenditSecret = strval(Tools::getValue('XENDIT_SECRET'));
+            $xenditExpiry = strval(Tools::getValue('XENDIT_INVOICE_EXPIRE'));
+            if ((!$xenditSecret || !$xenditExpiry)
+            || (empty($xenditSecret) || empty($xenditExpiry))
+            || !Validate::isGenericName($xenditSecret)
+            || !is_numeric($xenditExpiry))
+                $output .= $this->displayError($this->l('Invalid Configuration value'));
+            else
+            {
+                Configuration::updateValue('XENDIT_SECRET', $xenditSecret);
+                Configuration::updateValue('XENDIT_INVOICE_EXPIRE', $xenditExpiry);
+                $output .= $this->displayConfirmation($this->l('Settings updated'));
+            }
+        }
+        return $output.$this->displayForm();
+    }
+
+    public function displayForm()
+    {
+        // Get default language
+        $default_lang = (int)Configuration::get('PS_LANG_DEFAULT');
+        
+        // Init Fields form array
+        $fields_form[0]['form'] = array(
+            'legend' => array(
+                'title' => $this->l('Settings'),
+            ),
+            'input' => array(
+                array(
+                    'type' => 'text',
+                    'label' => $this->l('Xendit API Key'),
+                    'name' => 'XENDIT_SECRET',
+                    'size' => 5000,
+                    'required' => true
+                ),
+                array(
+                    'type' => 'text',
+                    'label' => $this->l('Xendit Invoice Expiry Time'),
+                    'name' => 'XENDIT_INVOICE_EXPIRE',
+                    'size' => 100,
+                    'required' => true
+                )
+            ),
+            'submit' => array(
+                'title' => $this->l('Save'),
+                'class' => 'btn btn-default pull-right'
+            )
+        );
+        
+        $helper = new HelperForm();
+        
+        // Module, token and currentIndex
+        $helper->module = $this;
+        $helper->name_controller = $this->name;
+        $helper->token = Tools::getAdminTokenLite('AdminModules');
+        $helper->currentIndex = AdminController::$currentIndex.'&configure='.$this->name;
+        
+        // Language
+        $helper->default_form_language = $default_lang;
+        $helper->allow_employee_form_lang = $default_lang;
+        
+        // Title and toolbar
+        $helper->title = $this->displayName;
+        $helper->show_toolbar = true;        // false -> remove toolbar
+        $helper->toolbar_scroll = true;      // yes - > Toolbar is always visible on the top of the screen.
+        $helper->submit_action = 'submit'.$this->name;
+        $helper->toolbar_btn = array(
+            'save' =>
+            array(
+                'desc' => $this->l('Save'),
+                'href' => AdminController::$currentIndex.'&configure='.$this->name.'&save'.$this->name.
+                '&token='.Tools::getAdminTokenLite('AdminModules'),
+            ),
+            'back' => array(
+                'href' => AdminController::$currentIndex.'&token='.Tools::getAdminTokenLite('AdminModules'),
+                'desc' => $this->l('Back to list')
+            )
+        );
+        
+        // Load current value
+        $helper->fields_value['XENDIT_SECRET'] = Configuration::get('XENDIT_SECRET');
+        $helper->fields_value['XENDIT_INVOICE_EXPIRE'] = Configuration::get('XENDIT_INVOICE_EXPIRE');
+        
+        return $helper->generateForm($fields_form);
     }
 
     public function hookPaymentOptions($params)
@@ -105,11 +192,7 @@ class PaymentExample extends PaymentModule
         }
 
         $payment_options = [
-            // $this->getOfflinePaymentOption(),
-            // $this->getExternalPaymentOption(),
             $this->getNewPaymentOption(),
-            // $this->getEmbeddedPaymentOption(),
-            // $this->getIframePaymentOption(),
         ];
 
         return $payment_options;

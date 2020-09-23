@@ -35,6 +35,7 @@ class PaymentExampleValidationModuleFrontController extends ModuleFrontControlle
     public function postProcess()
     {
         $cart = $this->context->cart;
+        $customer = $this->context->customer;
         if ($cart->id_customer == 0 || $cart->id_address_delivery == 0 || $cart->id_address_invoice == 0 || !$this->module->active) {
             Tools::redirect('index.php?controller=order&step=1');
         }
@@ -56,34 +57,24 @@ class PaymentExampleValidationModuleFrontController extends ModuleFrontControlle
             'params' => $_REQUEST,
         ]);
 
-        //$this->setTemplate('payment_return.tpl');
         $this->setTemplate('module:paymentexample/views/templates/front/payment_return.tpl');
 
-        // $customer = new Customer($cart->id_customer);
-        // if (!Validate::isLoadedObject($customer))
-        //     Tools::redirect('index.php?controller=order&step=1');
-
-        // $currency = $this->context->currency;
         $total = (float) $cart->getOrderTotal(true, Cart::BOTH);
-        // $mailVars = array(
-        //     '{bankwire_owner}' => Configuration::get('BANK_WIRE_OWNER'),
-        //     '{bankwire_details}' => nl2br(Configuration::get('BANK_WIRE_DETAILS')),
-        //     '{bankwire_address}' => nl2br(Configuration::get('BANK_WIRE_ADDRESS'))
-        // );
-        //hardcode sementara
-        $email = 'yano@xendit.co';
+
+        $email = $customer->email;
+        $duration = intval(Configuration::get('XENDIT_INVOICE_EXPIRE'));
+
         $timestamp = date("YmdHis");
         $params = [
             'external_id' => 'demo_'.$timestamp,
             'payer_email' => $email,
             'description' => 'Checkout Odading Mang Oleh',
             'amount' => $total,
-            'invoice_duration' => 3600
+            'invoice_duration' => $duration
         ];
         $createInvoice = $this->getXenditInvoice($params);
+        
         Tools::redirect($createInvoice->invoice_url);
-        // $this->module->validateOrder($cart->id, Configuration::get('PS_OS_BANKWIRE'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
-        // Tools::redirect('index.php?controller=order-confirmation&id_cart='.$cart->id.'&id_module='.$this->module->id.'&id_order='.$this->module->currentOrder.'&key='.$customer->secure_key);
     }
 
     protected function getXenditInvoice($data){
@@ -115,7 +106,7 @@ class PaymentExampleValidationModuleFrontController extends ModuleFrontControlle
     }
 
     protected function getXenditAuth(){
-        $secret = 'xnd_development_nALBhP7VB7evPXTg6xvFnmUdARU8GBxmT0o4DtwHujQ2397pMBbOkFzGsoVPgE';
+        $secret = Configuration::get('XENDIT_SECRET');
         return base64_encode($secret.':');
     }
 }
