@@ -70,7 +70,8 @@ class PaymentExampleValidationModuleFrontController extends ModuleFrontControlle
             'payer_email' => $email,
             'description' => 'Checkout Odading Mang Oleh',
             'amount' => $total,
-            'invoice_duration' => $duration
+            'invoice_duration' => $duration,
+            'should_send_email' => 'true'
         ];
         $createInvoice = $this->getXenditInvoice($params);
         
